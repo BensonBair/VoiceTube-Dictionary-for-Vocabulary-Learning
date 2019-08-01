@@ -1,21 +1,23 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Dec 17 23:47:56 2017
-
-@author: user
-"""
-
 import requests
+from fake_useragent import UserAgent
 import bs4
 import pandas as pd
-import os.path
+import os
+
+relative_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+data_path = os.path.join(relative_path, 'data', '')
+
+
+def get_fake_user_agent():
+    ua = UserAgent()
+    return ua.ie
 
 
 def lookupEngine():
     while True:
         print('================================\n=VoiceTube Dictionary by Benson=\n================================\n')
         print("Enter 'q' to quit\n")
-        file = pd.read_csv('vocabulary_lookup.csv', encoding='utf-8')
+        file = pd.read_csv(data_path + 'vocabulary_lookup.csv', encoding='utf-8')
 
         # enter vocabulary
         word = input('\nEnter a vocabulary:')
@@ -28,7 +30,7 @@ def lookupEngine():
             # look up the dictionary
             try:
                 # get request with user agent
-                r = requests.get(path, headers={'user-agent': 'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'})
+                r = requests.get(path, headers={'user-agent': get_fake_user_agent()})
                 r.encoding = 'utf-8'
                 soup = bs4.BeautifulSoup(r.text, 'lxml')
                 meta = soup.find_all('meta')
@@ -48,22 +50,21 @@ def lookupEngine():
                     if save == 'Y':
                         importance = input('\nEnter level of importance(1-3):')
                         file.loc[len(file)] = [word, definition, example, pd.to_numeric(importance)]
-                        file.to_csv('vocabulary_lookup.csv', encoding='utf-8', index=False)
+                        file.to_csv(data_path + 'vocabulary_lookup.csv', encoding='utf-8', index=False)
             # check if spelling mistakes exist
             except IndexError:
                 print('Word not found. Please enter again.')
 
+
 def main():
-    if not os.path.isfile('vocabulary_lookup.csv'):
+    if not os.path.isfile(data_path + 'vocabulary_lookup.csv'):
         # create empty cv file
         print('NO SUCH FILE: "vocabulary_lookup.csv".')
         temp = pd.DataFrame(columns=['Vocabulary', 'Definition', 'Example', 'importance'])
-        temp.to_csv('vocabulary_lookup.csv', encoding='utf-8', index=False)
+        temp.to_csv(data_path + 'vocabulary_lookup.csv', encoding='utf-8', index=False)
         print('FILE CRATED.')
-        # while loop
-        lookupEngine()
-    elif os.path.isfile('vocabulary_lookup.csv'):
-        lookupEngine()
+    lookupEngine()
+
 
 if __name__ == '__main__':
 
